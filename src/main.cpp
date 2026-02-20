@@ -7,12 +7,10 @@
 #include <iostream>
 #include <cstdint>
 
+#include "SphereVisualiser/SphereVisualiser.h"
+
 const int FFT_SIZE = 1024;
 const int BAR_COUNT = 360;
-
-#ifndef M_PI
-#   define M_PI 3.1415926535897932384626433832
-#endif
 
 int main()
 {
@@ -65,39 +63,8 @@ int main()
         }
 
         window.clear(sf::Color::Black);
-        sf::Vector2f center(window.getSize().x / 2.f, window.getSize().y / 2.f);
-
-        sf::VertexArray sphere(sf::PrimitiveType::LineStrip, BAR_COUNT);
-        int half = BAR_COUNT / 2;
-        std::vector<float> peaks(BAR_COUNT, 0.f);
-        float decay = 0.95f;
-
-        for (int i = 0; i < BAR_COUNT; i++)
-        {
-            int wrappedIndex = i % half;
-            float m = magnitudes[wrappedIndex];
-
-            if (m > peaks[wrappedIndex]) peaks[wrappedIndex] = m;
-            else peaks[wrappedIndex] *= decay; // fall slowly
-
-            float amplitude = peaks[wrappedIndex] * 100.f;
-			amplitude = (amplitude * (wrappedIndex + 1)) / BAR_COUNT; // dampen lower frequency visual range
-
-            float angle = (float)i / BAR_COUNT * 2.f * M_PI;
-            float radius = baseRadius + amplitude;
-
-            float x = center.x + cos(angle) * radius;
-            float y = center.y + sin(angle) * radius;
-            sphere[i].position = { x, y };
-
-            sphere[i].color = sf::Color(
-                100 + i % 155,
-                255 - i % 200,
-                255
-            );
-        }
-
-        window.draw(sphere);
+        SphereVisualiser sphere = SphereVisualiser(BAR_COUNT);
+		sphere.drawSphere(magnitudes, window);
         window.display();
     }
 
