@@ -19,7 +19,7 @@ int main()
     sf::RenderWindow window(sf::VideoMode({ 1000, 800 }), "Audio Sphere Visualizer");
     sf::SoundBuffer buffer;
 
-    if (!buffer.loadFromFile("music.mp3"))
+    if (!buffer.loadFromFile("robotvoice.mp3"))
     {
         std::cout << "Failed to load audio\n";
         return -1;
@@ -31,7 +31,6 @@ int main()
     const std::int16_t* samples = buffer.getSamples();
     std::size_t sampleCount = buffer.getSampleCount();
 
-    // FFT
     double in[FFT_SIZE];
     fftw_complex out[FFT_SIZE];
     fftw_plan plan = fftw_plan_dft_r2c_1d(FFT_SIZE, in, out, FFTW_ESTIMATE);
@@ -66,31 +65,34 @@ int main()
         }
 
         window.clear(sf::Color::Black);
+        sf::Vector2f center(window.getSize().x / 2.f, window.getSize().y / 2.f);
 
-        sf::Vector2f center(
-            window.getSize().x / 2.f,
-            window.getSize().y / 2.f
-        );
-
-        sf::VertexArray sphere(sf::PrimitiveType::Triangles, BAR_COUNT);
+        sf::VertexArray sphere(sf::PrimitiveType::LineStrip, BAR_COUNT);
+        int half = BAR_COUNT / 2;
+        std::vector<float> peaks(BAR_COUNT, 0.f);
+        float decay = 0.95f;
 
         for (int i = 0; i < BAR_COUNT; i++)
         {
-            int index = i % BAR_COUNT;
-            float angle = (float)index / BAR_COUNT * 2.f * M_PI;
+            int wrappedIndex = i % half;
+            float m = magnitudes[wrappedIndex];
 
-            float amplitude = magnitudes[index] * 100.f;
-			amplitude = (amplitude * (i + 1)) / BAR_COUNT; // weight higher frequencies more
+            if (m > peaks[wrappedIndex]) peaks[wrappedIndex] = m;
+            else peaks[wrappedIndex] *= decay; // fall slowly
+
+            float amplitude = peaks[wrappedIndex] * 100.f;
+			amplitude = (amplitude * (wrappedIndex + 1)) / BAR_COUNT; // dampen lower frequency visual range
+
+            float angle = (float)i / BAR_COUNT * 2.f * M_PI;
             float radius = baseRadius + amplitude;
 
             float x = center.x + cos(angle) * radius;
             float y = center.y + sin(angle) * radius;
-
             sphere[i].position = { x, y };
 
             sphere[i].color = sf::Color(
-                100 + index % 155,
-                255 - index % 200,
+                100 + i % 155,
+                255 - i % 200,
                 255
             );
         }
