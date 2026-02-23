@@ -3,23 +3,14 @@
 int main()
 {
     sf::RenderWindow window(sf::VideoMode({ 1000, 800 }), "Audio Sphere Visualizer");
-    sf::SoundBuffer buffer;
 
-    if (!buffer.loadFromFile("robotvoice.mp3"))
-    {
-        std::cout << "Failed to load audio\n";
-        return -1;
-    }
-
-    sf::Sound sound(buffer);
-    sound.play();
-
-    const std::int16_t* samples = buffer.getSamples();
-    std::size_t sampleCount = buffer.getSampleCount();
+	AudioService audioService;
+	audioService.loadSound("robotvoice.mp3");
 
     FftwService fftService(FFT_SIZE);
-    std::vector<float> magnitudes(BAR_COUNT);
+    SphereVisualiser sphere(BAR_COUNT);
 
+    audioService.playSound();
     while (window.isOpen())
     {
         while (auto event = window.pollEvent())
@@ -27,24 +18,13 @@ int main()
             if (event->is<sf::Event::Closed>()) window.close();
         }
 
-        float seconds = sound.getPlayingOffset().asSeconds();
-        std::size_t currentSample = seconds * buffer.getSampleRate() * buffer.getChannelCount();
-        if (currentSample + FFT_SIZE >= sampleCount) continue;
+		if (audioService.checkSoundFinished(FFT_SIZE)) continue;
 
-		fftService.fillFftwBuffer(samples, currentSample);
-
-		// Create a vector of magnitudes from the FFT output
-        for (int i = 0; i < BAR_COUNT; i++)
-        {
-            double real = fftService.out[i][0];
-            double imag = fftService.out[i][1];
-
-            magnitudes[i] = std::sqrt(real * real + imag * imag);
-        }
+		fftService.fillFftwBuffer(audioService.samples, audioService.currentSample);
+		sphere.SetMagnitudes(fftService.out);
 
         window.clear(sf::Color::Black);
-        SphereVisualiser sphere (BAR_COUNT);
-		sphere.drawSphere(magnitudes, window);
+		sphere.drawSphere(window);
         window.display();
     }
 

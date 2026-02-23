@@ -3,9 +3,10 @@
 SphereVisualiser::SphereVisualiser(int newBarCount) {
 	sphere = sf::VertexArray(sf::PrimitiveType::LineStrip, newBarCount);
 	barCount = newBarCount;
+    magnitudes = std::vector<float>(newBarCount);
 }
 
-void SphereVisualiser::drawSphere(std::vector<float>& magnitudes, sf::RenderWindow& window)
+void SphereVisualiser::drawSphere(sf::RenderWindow& window)
 {
     sf::Vector2f center(window.getSize().x / 2.f, window.getSize().y / 2.f);
 
@@ -39,4 +40,17 @@ void SphereVisualiser::drawSphere(std::vector<float>& magnitudes, sf::RenderWind
     }
 
 	window.draw(sphere);
+}
+
+
+void SphereVisualiser::SetMagnitudes(fftw_complex* out)
+{
+    // Create a vector of magnitudes from the FFT output
+    for (int i = 0; i < barCount; i++)
+    {
+        double real = out[i][0];
+        double imag = out[i][1];
+
+        magnitudes[i] = std::sqrt(real * real + imag * imag);
+    }
 }

@@ -12,7 +12,11 @@ find_package(SFML CONFIG REQUIRED COMPONENTS
 
 find_package(FFTW3 CONFIG REQUIRED)
 
-add_executable(AudioVisualizer src/main.cpp src/SphereVisualiser/SphereVisualiser.cpp src/FftwService/FftwService.cpp)
+add_executable(AudioVisualizer 
+    src/main.cpp 
+    src/SphereVisualiser/SphereVisualiser.cpp 
+    src/FftwService/FftwService.cpp 
+    src/AudioService/AudioService.cpp)
 
 target_link_libraries(AudioVisualizer PRIVATE
     SFML::Graphics
